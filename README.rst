@@ -58,7 +58,7 @@ POST /<prefix>/params
 GET /<prefix>/token
 ~~~~~~~~~~~~~~~~~~~~
 
-    **Requires session cookie** 
+    **Requires session cookie**
 
     Returns the current status of the session (e.g. if it's authenticated or not)::
 
@@ -90,7 +90,7 @@ GET /<prefix>/token
 POST /<prefix>/token
 ~~~~~~~~~~~~~~~~~~~~~
 
-    **Requires session cookie** 
+    **Requires session cookie**
 
     Trades an OAuth code with an OAuth bearer token::
 
