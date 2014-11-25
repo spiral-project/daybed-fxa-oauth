@@ -25,5 +25,5 @@ clean:
 	find . -name '*.pyc' -delete
 	find . -name '__pycache__' -delete
 
-serve: install install-dev
+serve: install
 	$(VENV)/bin/pserve conf/development.ini --reload

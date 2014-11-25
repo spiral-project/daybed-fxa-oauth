@@ -13,6 +13,7 @@ with open(os.path.join(here, 'CHANGES.rst')) as f:
 requires = [
     'pyramid >= 1.3',
     'daybed',
+    'requests',
     'webtest'
 ]
 
