@@ -1,0 +1,13 @@
+<html>
+<head>
+  <script type="text/javascript">
+    function getParameterByName(name) {
+      name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+      var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+        results = regex.exec(location.search);
+      return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+    }
+    document.write("<code>http POST http://localhost:8000/tokens/fxa-oauth/token state=" + getParameterByName("state")  + " code=" + getParameterByName("code") + " --session=user1 -v</code>");
+  </script>
+</head>
+</html>
