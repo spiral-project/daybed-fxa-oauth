@@ -2,7 +2,11 @@ class UserIdNotFound(Exception):
     pass
 
 
-class UserIdAlreadyExist(Exception):
+class UserTokenNotFound(Exception):
+    pass
+
+
+class UserTokenAlreadyExist(Exception):
     pass
 
 

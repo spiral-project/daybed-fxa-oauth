@@ -160,6 +160,8 @@ def trade_token(request):
 
     token, credentials = get_hawk_credentials(token)
 
+    request.db.set_user_id(credentials['id'], email)
+
     if is_new:
         db.store_user_token(uid_hmaced, token)
         request.db.store_credentials(token, credentials)

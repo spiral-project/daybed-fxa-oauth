@@ -12,7 +12,7 @@ from .views import docs
 from . import views
 from ..exceptions import (
     OAuthAccessTokenNotFound, StateNotFound,
-    UserIdNotFound, UserIdAlreadyExist, RedirectURINotFound
+    UserTokenNotFound, UserTokenAlreadyExist, RedirectURINotFound
 )
 
 
@@ -60,7 +60,7 @@ class CouchDBBackend(object):
         try:
             return views.usertokens(self._db, key=user_id).rows[0].value
         except IndexError:
-            raise UserIdNotFound(user_id)
+            raise UserTokenNotFound(user_id)
 
     def get_user_token(self, user_id):
         """Returns the information associated with a user token"""
@@ -71,8 +71,8 @@ class CouchDBBackend(object):
         # Check that the token doesn't already exist.
         try:
             self.__get_raw_user_token(user_id)
-            raise UserIdAlreadyExist(user_id)
-        except UserIdNotFound:
+            raise UserTokenAlreadyExist(user_id)
+        except UserTokenNotFound:
             pass
 
         doc = dict(token=token, user_id=user_id, type='usertoken')

@@ -3,8 +3,8 @@ import redis
 import uuid
 
 from ..exceptions import (
-    OAuthAccessTokenNotFound, StateNotFound,
-    UserIdNotFound, UserIdAlreadyExist, RedirectURINotFound
+    OAuthAccessTokenNotFound, StateNotFound, RedirectURINotFound,
+    UserTokenNotFound, UserTokenAlreadyExist
 )
 
 
@@ -33,15 +33,15 @@ class RedisBackend(object):
         """Retrieves a token for the userid"""
         token = self._db.get("usertoken.%s" % user_id)
         if token is None:
-            raise UserIdNotFound(user_id)
+            raise UserTokenNotFound(user_id)
         return token.decode("utf-8")
 
     def store_user_token(self, user_id, token):
         # Check that the token doesn't already exist.
         try:
             self.get_user_token(user_id)
-            raise UserIdAlreadyExist(user_id)
-        except UserIdNotFound:
+            raise UserTokenAlreadyExist(user_id)
+        except UserTokenNotFound:
             pass
 
         self._db.set("usertoken.%s" % user_id, token)

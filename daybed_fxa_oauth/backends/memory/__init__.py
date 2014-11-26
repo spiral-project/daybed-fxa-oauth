@@ -2,7 +2,7 @@ import uuid
 
 from ..exceptions import (
     OAuthAccessTokenNotFound, StateNotFound,
-    UserIdNotFound, UserIdAlreadyExist, RedirectURINotFound
+    UserTokenNotFound, UserTokenAlreadyExist, RedirectURINotFound
 )
 
 
@@ -21,7 +21,7 @@ class MemoryBackend(object):
 
     def _init_db(self):
         self._db = {
-            'usertokens': {},
+            'user_tokens': {},
             'redirect_uris': {},
             'session_states': {},
             'session_oauth_access_tokens': {}
@@ -30,19 +30,19 @@ class MemoryBackend(object):
     def get_user_token(self, user_id):
         """Retrieves a token for the userid"""
         try:
-            return str(self._db['usertokens'][user_id])
+            return str(self._db['user_tokens'][user_id])
         except KeyError:
-            raise UserIdNotFound(user_id)
+            raise UserTokenNotFound(user_id)
 
     def store_user_token(self, user_id, token):
         # Check that the token doesn't already exist.
         try:
             self.get_user_token(user_id)
-            raise UserIdAlreadyExist(user_id)
-        except UserIdNotFound:
+            raise UserTokenAlreadyExist(user_id)
+        except UserTokenNotFound:
             pass
 
-        self._db['usertokens'][user_id] = token
+        self._db['user_tokens'][user_id] = token
 
     def get_redirect_uri(self, state):
         """Retrieves a redirect URI for the given state"""
