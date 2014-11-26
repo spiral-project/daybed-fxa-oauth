@@ -10,6 +10,15 @@ function(doc){
 """)
 
 """The state from their ids"""
+redirect_uris = ViewDefinition('fxa_oauth_redirect_uris', 'by_state', """
+function(doc){
+  if(doc.type == 'fxa_oauth_redirect_uri'){
+      emit(doc.state, doc);
+  }
+}
+""")
+
+"""The state from their ids"""
 states = ViewDefinition('fxa_oauth_states', 'by_session_id', """
 function(doc){
   if(doc.type == 'fxa_oauth_states'){

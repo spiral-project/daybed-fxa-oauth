@@ -2,11 +2,12 @@
 OAUTH_URI=${OAUTH_URI-https://oauth-stable.dev.lcip.org/v1}
 SERVER_URI=${SERVER_URI-http://localhost:8000}
 CLIENT_ID=${CLIENT_ID-d61805f6023398a3}
+REDIRECT_URI=${REDIRECT_URI-http://localhost/}
 
 SESSION_FILE=/tmp/user1
 
 # 1. Get the state
-http POST "${SERVER_URI}/tokens/fxa-oauth/params" --session="${SESSION_FILE}" -v
+http POST "${SERVER_URI}/tokens/fxa-oauth/params" redirect_uri=${REDIRECT_URI} --session="${SESSION_FILE}" -v
 
 echo "Now enter the STATE: "
 read STATE

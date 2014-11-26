@@ -1,22 +1,40 @@
 # -*- coding: utf-8 -*-
 import json
 import logging
+import re
 import requests
 import uuid
 
+from urllib import urlencode
+
+from pyramid.httpexceptions import HTTPFound
+from daybed.tokens import get_hawk_credentials, hmac_digest
 from cornice import Service
-from colander import MappingSchema, SchemaNode, String
+from colander import MappingSchema, SchemaNode, String, Regex
 
 from .backends.exceptions import (
-    OAuthAccessTokenNotFound, StateNotFound, UserIdNotFound
+    OAuthAccessTokenNotFound, StateNotFound, UserIdNotFound, RedirectURINotFound
 )
 
-from daybed.tokens import get_hawk_credentials, hmac_digest
 logger = logging.getLogger(__name__)
 
 
 params = Service(name='fxa-oauth params', path='/tokens/fxa-oauth/params')
 token = Service(name='fxa-oauth-token', path='/tokens/fxa-oauth/token')
+redirect = Service(name='fxa-oauth-redirect', path='/tokens/fxa-oauth/redirect')
+
+# This one comes from Django
+# https://github.com/django/django/blob/273b96/
+# django/core/validators.py#L45-L52
+URLPATTERN = re.compile(
+            r'^(?:http|ftp)s?://'  # http:// or https://
+            r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+'
+            r'(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
+            r'localhost|'  # localhost...
+            r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|'  # ...or ipv4
+            r'\[?[A-F0-9]*:[A-F0-9:]+\]?)'  # ...or ipv6
+            r'(?::\d+)?'  # optional port
+            r'(?:/?|[/?]\S+)$', re.IGNORECASE)
 
 
 def validate_session_cookie(request):
@@ -26,7 +44,13 @@ def validate_session_cookie(request):
         request.errors.status = 401
 
 
-@params.post()
+class ParamsRequest(MappingSchema):
+    redirect_uri = SchemaNode(
+        String(), validator=Regex(URLPATTERN, msg="Invalid URL"),
+        location="body")
+
+
+@params.post(schema=ParamsRequest)
 def get_fxa_parameters(request):
     """Provide the client with the parameters needed for the OAuth dance."""
     db = request.registry.fxa_oauth_db
@@ -40,6 +64,7 @@ def get_fxa_parameters(request):
 
     # Create a session and attach a state to it.
     state = db.get_or_set_state(session_id)
+    db.set_redirect_uri(state, request.validated['redirect_uri'])
 
     return {
         "client_id": request.registry['fxa-oauth.client_id'],
@@ -49,18 +74,6 @@ def get_fxa_parameters(request):
         "oauth_uri": request.registry['fxa-oauth.oauth_uri'],
         "scope": request.registry['fxa-oauth.scope'],
         "state": state
-    }
-
-
-@token.get(validators=[validate_session_cookie])
-def get_access_token(request):
-    db = request.registry.fxa_oauth_db
-    try:
-        access_token = db.get_oauth_access_token(request.cookies['session_id'])
-    except OAuthAccessTokenNotFound:
-        access_token = None
-    return {
-        "access_token": access_token
     }
 
 
@@ -85,6 +98,8 @@ def trade_token(request):
                            'session cookie not found')
         request.errors.status = 404
         return
+
+    redirect_uri = db.get_redirect_uri(state)
 
     db.set_state(session_id)
     if stored_state != state:
@@ -128,7 +143,8 @@ def trade_token(request):
     email = data['email']
     uid = data['uid']
 
-    uid_hmaced = hmac_digest(request.registry.tokenHmacKey, uid)
+    uid_hmaced = hmac_digest(request.registry.tokenHmacKey,
+                             "%s:%s" % (redirect_uri, uid))
     is_new = False
     try:
         token = db.get_user_token(uid_hmaced)
@@ -141,7 +157,7 @@ def trade_token(request):
     if is_new:
         db.store_user_token(uid_hmaced, token)
         request.db.store_credentials(token, credentials)
-        request.response.status = "201 Created"
+        request.response.status = 201
 
     return {
         'token': token,
@@ -151,3 +167,17 @@ def trade_token(request):
             'email': email
         }
     }
+
+
+@redirect.get()
+def redirect_to_app(request):
+    db = request.registry.fxa_oauth_db
+    try:
+        redirect_uri = db.get_redirect_uri(request.params.get('state'))
+    except RedirectUrlNotFound:
+        request.response.status = 400
+        return
+
+    url = "%s?%s" % (redirect_uri, urlencode(request.params))
+
+    return HTTPFound(location=url)

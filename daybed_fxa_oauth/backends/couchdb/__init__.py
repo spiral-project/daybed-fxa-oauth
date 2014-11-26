@@ -12,7 +12,7 @@ from .views import docs
 from . import views
 from ..exceptions import (
     OAuthAccessTokenNotFound, StateNotFound,
-    UserIdNotFound, UserIdAlreadyExist
+    UserIdNotFound, UserIdAlreadyExist, RedirectURINotFound
 )
 
 
@@ -106,6 +106,26 @@ class CouchDBBackend(object):
             return self.get_state(session_id)
         except StateNotFound:
             return self.set_state(session_id)
+
+    def __get_raw_redirect_uri(self, state):
+        try:
+            return views.redirect_uris(self._db, key=state).rows[0].value
+        except IndexError:
+            raise RedirectURINotFound(session_id)
+
+    def get_state(self, state):
+        """Retrives the session_id state."""
+        redirect_uri_doc = dict(**self.__get_raw_state(state))
+        return redirect_uri_doc['redirect_uri']
+
+    def set_state(self, state, redirect_uri):
+        """Set a redirect_uri."""
+        try:
+            doc = self.__get_raw_state(state)
+        except RedirectURINotFound:
+            doc = {"type": "fxa_oauth_redirect_uri", "state": state}
+        doc['redirect_uri'] = redirect_uri
+        self._db.save(doc)
 
     def __get_raw_oauth_access_token(self, session_id):
         try:

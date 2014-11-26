@@ -2,7 +2,7 @@ import uuid
 
 from ..exceptions import (
     OAuthAccessTokenNotFound, StateNotFound,
-    UserIdNotFound, UserIdAlreadyExist
+    UserIdNotFound, UserIdAlreadyExist, RedirectURINotFound
 )
 
 
@@ -22,6 +22,7 @@ class MemoryBackend(object):
     def _init_db(self):
         self._db = {
             'usertokens': {},
+            'redirect_uris': {},
             'session_states': {},
             'session_oauth_access_tokens': {}
         }
@@ -42,6 +43,16 @@ class MemoryBackend(object):
             pass
 
         self._db['usertokens'][user_id] = token
+
+    def get_redirect_uri(self, state):
+        """Retrieves a redirect URI for the given state"""
+        try:
+            return str(self._db['redirect_uris'][state])
+        except KeyError:
+            raise RedirectURINotFound(user_id)
+
+    def set_redirect_uri(self, state, redirect_uri):
+        self._db['redirect_uris'][state] = token
 
     def get_state(self, session_id):
         """Retrives the session_id state."""

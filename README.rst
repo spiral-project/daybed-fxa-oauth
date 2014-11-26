@@ -29,7 +29,7 @@ POST /<prefix>/params
 
     ::
 
-        http POST http://localhost:8000/v1/<prefix>/params --verbose --json
+        http POST http://localhost:8000/v1/<prefix>/params redirect_uri=http://webapp-callback-uri/ -v
 
     .. code-block:: http
 
@@ -52,38 +52,6 @@ POST /<prefix>/params
             "redirect_uri": "urn:ietf:wg:oauth:2.0:fx:webchannel",
             "scope": "profile",
             "state": "b56b3753c15efdcae80ea208134ecd6ae97f27027ce9bb11f7c333be6ea7029c"
-        }
-
-
-GET /<prefix>/token
-~~~~~~~~~~~~~~~~~~~~
-
-    **Requires session cookie**
-
-    Returns the current status of the session (e.g. if it's authenticated or not)::
-
-        http GET http://localhost:8000/v1/<prefix>/token  --verbose --json
-
-    If the current session is authenticated using OAuth, it returns it
-    in the **access_token** attribute.
-
-    .. code-block:: http
-
-        GET /v1/<prefix>/token HTTP/1.1
-        Accept: application/json
-        Accept-Encoding: gzip, deflate
-        Content-Type: application/json; charset=utf-8
-        Host: localhost:5000
-        User-Agent: HTTPie/0.8.0
-        + Session cookie
-
-        HTTP/1.1 200 OK
-        Connection: keep-alive
-        Content-Type: application/json; charset=utf-8
-        Timestamp: 1409058431
-
-        {
-            "access_token": ""
         }
 
 
@@ -117,3 +85,9 @@ POST /<prefix>/token
         }
 
 
+GET /<prefix>/redirect
+~~~~~~~~~~~~~~~~~~~~
+
+    Redirects the user to the app URL with the state and code.
+
+        http GET http://localhost:8000/v1/<prefix>/redirect?state=<state>&code=<code>

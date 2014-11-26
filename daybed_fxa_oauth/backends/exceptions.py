@@ -12,3 +12,7 @@ class StateNotFound(Exception):
 
 class OAuthAccessTokenNotFound(Exception):
     pass
+
+
+class RedirectURINotFound(Exception):
+    pass

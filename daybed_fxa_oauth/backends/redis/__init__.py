@@ -4,7 +4,7 @@ import uuid
 
 from ..exceptions import (
     OAuthAccessTokenNotFound, StateNotFound,
-    UserIdNotFound, UserIdAlreadyExist
+    UserIdNotFound, UserIdAlreadyExist, RedirectURINotFound
 )
 
 
@@ -45,6 +45,17 @@ class RedisBackend(object):
             pass
 
         self._db.set("usertoken.%s" % user_id, token)
+
+    def get_redirect_uri(self, state):
+        """Retrives the redirect_uri for the state."""
+        redirect_uri = self._db.get("fxa_oauth_redirect_uri.%s" % state)
+        if redirect_uri is None:
+            raise RedirectURINotFound(session_id)
+        return redirect_uri.decode("utf-8")
+
+    def set_redirect_uri(self, state, redirect_uri):
+        """Set a session_id state."""
+        self._db.set("fxa_oauth_redirect_uri.%s" % state, redirect_uri)
 
     def get_state(self, session_id):
         """Retrives the session_id state."""
