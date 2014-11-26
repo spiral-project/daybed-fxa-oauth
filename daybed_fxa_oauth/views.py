@@ -39,9 +39,14 @@ URLPATTERN = re.compile(
 
 def validate_session_cookie(request):
     if 'session_id' not in request.cookies:
-        request.errors.add('body', 'session cookie',
-                           'session cookie not defined')
-        request.errors.status = 401
+        if 'Session-Id' not in request.headers:
+            request.errors.add('body', 'session cookie',
+                               'session_id cookie or header are not defined')
+            request.errors.status = 401
+        else:
+            request.session_id = request.headers.get('Session-Id')
+    else:
+        request.session_id = request.cookies.get('session_id')
 
 
 class ParamsRequest(MappingSchema):
@@ -59,6 +64,7 @@ def get_fxa_parameters(request):
     if 'session_id' not in request.cookies:
         session_id = uuid.uuid4().hex
         request.response.set_cookie('session_id', session_id)
+        request.response.headers['Session-Id'] = session_id
     else:
         session_id = request.cookies['session_id']
 
@@ -86,7 +92,7 @@ class OAuthRequest(MappingSchema):
 def trade_token(request):
     """Trade an OAuth code with an oauth bearer token."""
     db = request.registry.fxa_oauth_db
-    session_id = request.cookies['session_id']
+    session_id = request.session_id
 
     code = request.validated['code']
     state = request.validated['state']
@@ -174,7 +180,7 @@ def redirect_to_app(request):
     db = request.registry.fxa_oauth_db
     try:
         redirect_uri = db.get_redirect_uri(request.params.get('state'))
-    except RedirectUrlNotFound:
+    except RedirectURINotFound:
         request.response.status = 400
         return
 
