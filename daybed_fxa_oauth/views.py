@@ -154,7 +154,7 @@ def trade_token(request):
     is_new = False
     try:
         token = db.get_user_token(uid_hmaced)
-    except UserIdNotFound:
+    except UserTokenNotFound:
         is_new = True
         token = None
 
