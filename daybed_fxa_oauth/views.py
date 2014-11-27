@@ -13,7 +13,7 @@ from cornice import Service
 from colander import MappingSchema, SchemaNode, String, Regex
 
 from .backends.exceptions import (
-    OAuthAccessTokenNotFound, StateNotFound, UserIdNotFound, RedirectURINotFound
+    OAuthAccessTokenNotFound, StateNotFound, UserTokenNotFound, RedirectURINotFound
 )
 
 logger = logging.getLogger(__name__)
@@ -154,7 +154,7 @@ def trade_token(request):
     is_new = False
     try:
         token = db.get_user_token(uid_hmaced)
-    except UserIdNotFound:
+    except UserTokenNotFound:
         is_new = True
         token = None
 
